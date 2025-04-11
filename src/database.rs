@@ -23,6 +23,8 @@ pub(crate) enum Database {
 	Echodb,
 	#[cfg(feature = "fjall")]
 	Fjall,
+	#[cfg(feature = "helixdb")]
+	Helixdb,
 	#[cfg(feature = "keydb")]
 	Keydb,
 	#[cfg(feature = "lmdb")]
@@ -65,40 +67,43 @@ impl Database {
 	/// Start the Docker container if necessary
 	pub(crate) fn start_docker(&self, options: &Benchmark) -> Option<Container> {
 		// Get any pre-defined Docker configuration
-		let params: DockerParams = match self {
-			#[cfg(feature = "arangodb")]
-			Self::Arangodb => crate::arangodb::docker(options),
-			#[cfg(feature = "dragonfly")]
-			Self::Dragonfly => crate::dragonfly::docker(options),
-			#[cfg(feature = "keydb")]
-			Self::Keydb => crate::keydb::docker(options),
-			#[cfg(feature = "mongodb")]
-			Self::Mongodb => crate::mongodb::docker(options),
-			#[cfg(feature = "mysql")]
-			Self::Mysql => crate::mysql::docker(options),
-			#[cfg(feature = "mysql")]
-			Self::Neo4j => crate::neo4j::docker(options),
-			#[cfg(feature = "postgres")]
-			Self::Postgres => crate::postgres::docker(options),
-			#[cfg(feature = "redis")]
-			Self::Redis => crate::redis::docker(options),
-			#[cfg(feature = "scylladb")]
-			Self::Scylladb => crate::scylladb::docker(options),
-			#[cfg(feature = "surrealdb")]
-			Self::SurrealdbMemory => crate::surrealdb::docker(options),
-			#[cfg(feature = "surrealdb")]
-			Self::SurrealdbRocksdb => crate::surrealdb::docker(options),
-			#[cfg(feature = "surrealdb")]
-			Self::SurrealdbSurrealkv => crate::surrealdb::docker(options),
-			#[allow(unreachable_patterns)]
-			_ => return None,
-		};
-		// Check if a custom image has been specified
-		let image = options.image.clone().unwrap_or(params.image.to_string());
-		// Start the specified container with arguments
-		let container = Container::start(image, params.pre_args, params.post_args, options);
-		// Return the container reference
-		Some(container)
+		// let params: DockerParams = match self {
+		// 	#[cfg(feature = "arangodb")]
+		// 	Self::Arangodb => crate::arangodb::docker(options),
+		// 	#[cfg(feature = "dragonfly")]
+		// 	Self::Dragonfly => crate::dragonfly::docker(options),
+		// 	#[cfg(feature = "helixdb")]
+		// 	Self::Helixdb => {},
+		// 	#[cfg(feature = "keydb")]
+		// 	Self::Keydb => crate::keydb::docker(options),
+		// 	#[cfg(feature = "mongodb")]
+		// 	Self::Mongodb => crate::mongodb::docker(options),
+		// 	#[cfg(feature = "mysql")]
+		// 	Self::Mysql => crate::mysql::docker(options),
+		// 	#[cfg(feature = "mysql")]
+		// 	Self::Neo4j => crate::neo4j::docker(options),
+		// 	#[cfg(feature = "postgres")]
+		// 	Self::Postgres => crate::postgres::docker(options),
+		// 	#[cfg(feature = "redis")]
+		// 	Self::Redis => crate::redis::docker(options),
+		// 	#[cfg(feature = "scylladb")]
+		// 	Self::Scylladb => crate::scylladb::docker(options),
+		// 	#[cfg(feature = "surrealdb")]
+		// 	Self::SurrealdbMemory => crate::surrealdb::docker(options),
+		// 	#[cfg(feature = "surrealdb")]
+		// 	Self::SurrealdbRocksdb => crate::surrealdb::docker(options),
+		// 	#[cfg(feature = "surrealdb")]
+		// 	Self::SurrealdbSurrealkv => crate::surrealdb::docker(options),
+		// 	#[allow(unreachable_patterns)]
+		// 	_ => return None,
+		// };
+		// // Check if a custom image has been specified
+		// let image = options.image.clone().unwrap_or(params.image.to_string());
+		// // Start the specified container with arguments
+		// let container = Container::start(image, params.pre_args, params.post_args, options);
+		// // Return the container reference
+		// Some(container)
+		None
 	}
 
 	/// Run the benchmarks for the chosen database
@@ -167,6 +172,18 @@ impl Database {
 				benchmark
 					.run::<_, DefaultDialect, _>(
 						crate::fjall::FjallClientProvider::setup(kt, vp.columns(), benchmark)
+							.await?,
+						kp,
+						vp,
+						scans,
+					)
+					.await
+			}
+			#[cfg(feature = "helixdb")]
+			Database::Helixdb => {
+				benchmark
+					.run::<_, DefaultDialect, _>(
+						crate::helixdb::HelixDBClientProvider::setup(kt, vp.columns(), benchmark)
 							.await?,
 						kp,
 						vp,

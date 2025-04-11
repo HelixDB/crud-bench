@@ -29,6 +29,7 @@ mod dragonfly;
 mod dry;
 mod echodb;
 mod fjall;
+mod helixdb;
 mod keydb;
 mod lmdb;
 mod map;
@@ -206,7 +207,7 @@ fn run(args: Args) -> Result<()> {
 		// Not handling this results in crud-bench starting a container never used by the client and the benchmark.
 		None
 	} else {
-		args.database.start_docker(&benchmark)
+		None
 	};
 	// Setup the asynchronous runtime
 	let runtime = runtime::Builder::new_multi_thread()
